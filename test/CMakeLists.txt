@@ -81,9 +81,22 @@ add_executable(perf-sanity perf-sanity.cc)
 target_link_libraries(perf-sanity fmt::fmt)
 
 if (FMT_MODULE)
-  # Module tests are currently disabled.
-  # add_fmt_test(module-test MODULE test-main.cc)
-  # target_link_libraries(module-test fmt-module)
+  add_executable(module-test module-test.cc)
+  target_link_libraries(module-test PRIVATE fmt::fmt-module)
+  target_compile_features(module-test PRIVATE cxx_std_20)
+  if (CMAKE_COMPILER_IS_GNUCXX AND NOT FMT_USE_CMAKE_MODULES)
+    target_compile_options(module-test PRIVATE -fmodules-ts)
+    set(GCM_SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/gcm.cache)
+    add_custom_command(
+      OUTPUT ${GCM_SYMLINK}
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_BINARY_DIR}/gcm.cache ${GCM_SYMLINK}
+      DEPENDS fmt-module
+      COMMENT "Creating gcm.cache symlink for module-test")
+    set_source_files_properties(module-test.cc
+      PROPERTIES OBJECT_DEPENDS ${GCM_SYMLINK})
+  endif ()
+  add_test(NAME module-test COMMAND module-test)
 endif ()
 
 if (NOT DEFINED MSVC_STATIC_RUNTIME AND MSVC)

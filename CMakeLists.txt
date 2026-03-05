@@ -399,8 +399,15 @@ endfunction ()
 
 if (FMT_MODULE)
   add_module_library(fmt-module src/fmt.cc USE_CMAKE_MODULES
-                     ${FMT_USE_CMAKE_MODULES})
+          ${FMT_USE_CMAKE_MODULES})
   setup_target(fmt-module PUBLIC)
+
+  # When not using CMake's native CXX_MODULES support, fmt-module only
+  # contains the compiled BMI object. Symbol definitions live in the
+  # fmt target and must be explicitly linked for consumers.
+  if (NOT FMT_USE_CMAKE_MODULES)
+    target_link_libraries(fmt-module PUBLIC fmt)
+  endif ()
 endif ()
 
 add_library(fmt-header-only INTERFACE)
